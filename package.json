@@ -1,0 +1,17 @@
+{
+  "name": "wonderboy-dev",
+  "private": true,
+  "description": "Development only: tests and tools for the app in app/",
+  "scripts": {
+    "setup": "npm install && npm install --prefix app",
+    "typecheck": "npm run typecheck --prefix app && tsc --noEmit",
+    "test": "tsx tools/testBackend.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "jszip": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# Private: contains personal contact details. Kept on disk only.
+instructions/instructionsEmail.pdf

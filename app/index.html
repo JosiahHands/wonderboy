@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>WonderBoy</title>
+  <style>
+    :root {
+      --bg: #f5f5f4;
+      --panel: #ffffff;
+      --text: #1c1917;
+      --muted: #6b6560;
+      --border: #d6d3d1;
+      --accent: #1d4ed8;
+      --accent-text: #ffffff;
+      --note-bg: #fef9c3;
+      --note-border: #eab308;
+      --error: #b91c1c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1917;
+        --panel: #292524;
+        --text: #f5f5f4;
+        --muted: #a8a29e;
+        --border: #44403c;
+        --accent: #3b82f6;
+        --note-bg: #3f3a1e;
+        --note-border: #a16207;
+        --error: #f87171;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+      user-select: none;
+    }
+    section { display: flex; flex-direction: column; height: 100%; padding: 20px 24px; gap: 14px; }
+    section[hidden] { display: none; }
+    h1 { font-size: 22px; margin: 0; }
+    h2 { font-size: 18px; margin: 0; }
+
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 2px; }
+    .folder { font-size: 17px; font-weight: 600; margin: 0; word-break: break-word; }
+    .path { color: var(--muted); font-size: 12px; margin: 2px 0 0; word-break: break-all; }
+
+    .note {
+      background: var(--note-bg);
+      border-left: 4px solid var(--note-border);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 0;
+    }
+
+    fieldset { border: 1px solid var(--border); border-radius: 6px; background: var(--panel); padding: 8px 14px 12px; margin: 0; }
+    legend { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 0 4px; }
+    label { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; margin-top: 6px; cursor: pointer; }
+    label input { margin: 3px 0 0; width: 16px; height: 16px; }
+    label small { grid-column: 2; color: var(--muted); font-size: 12px; }
+
+    .footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .buttons { display: flex; gap: 10px; margin-left: auto; }
+    button {
+      font: inherit;
+      min-width: 88px;
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    #working { align-items: center; justify-content: center; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    pre {
+      flex: 1;
+      overflow: auto;
+      margin: 0;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font: 13px/1.5 Consolas, monospace;
+      white-space: pre-wrap;
+      user-select: text;
+    }
+    .failed h2 { color: var(--error); }
+  </style>
+</head>
+<body>
+  <!-- Are you ready? -->
+  <section id="ready" hidden>
+    <h1>WonderBoy</h1>
+    <div>
+      <p class="label">Case folder</p>
+      <p class="folder" id="folder-name"></p>
+      <p class="path" id="folder-path"></p>
+    </div>
+
+    <p class="note">Save <b>00 WonderBoy.xlsx</b> in Excel before you start.</p>
+
+    <fieldset>
+      <legend>Settings</legend>
+      <label>
+        <input type="checkbox" id="match-case">
+        <span>Match case</span>
+        <small>On: (APPLICANT) does not match (Applicant).</small>
+      </label>
+      <label>
+        <input type="checkbox" id="include-parentheses">
+        <span>Include parentheses</span>
+        <small>On: match (APPLICANT). Off: match APPLICANT.</small>
+      </label>
+    </fieldset>
+
+    <div class="footer">
+      <h2>Are you ready?</h2>
+      <div class="buttons">
+        <button id="no">No</button>
+        <button id="yes" class="primary">Yes</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Working -->
+  <section id="working" hidden>
+    <div class="spinner"></div>
+    <p>Filling in documents…</p>
+  </section>
+
+  <!-- Report or error -->
+  <section id="done" hidden>
+    <h2 id="done-title">Done</h2>
+    <pre id="report"></pre>
+    <div class="footer">
+      <div class="buttons">
+        <button id="close" class="primary">Close</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="dist/renderer.js"></script>
+</body>
+</html>
