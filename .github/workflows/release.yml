@@ -1,0 +1,61 @@
+# Builds the WonderBoy installer and publishes it as a GitHub release.
+# Runs on every push to master, but only builds when app/package.json has a version
+# that has no release yet. To ship an update: raise "version" in app/package.json and push.
+# The install and update commands always download the latest release.
+
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: app
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check if this version is already released
+        id: check
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" > /dev/null 2>&1; then
+            echo "v$version is already released, nothing to do."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v5
+        if: steps.check.outputs.released == 'false'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Build the installer
+        if: steps.check.outputs.released == 'false'
+        run: |
+          npm ci
+          npx tsc
+          npx electron-builder --win --publish never
+
+      - name: Publish the release
+        if: steps.check.outputs.released == 'false'
+        run: |
+          version="${{ steps.check.outputs.version }}"
+          gh release create "v$version" release/WonderBoy-Setup.exe \
+            --title "WonderBoy $version" \
+            --notes "Install and update commands: see the README at https://github.com/JosiahHands/wonderboy"

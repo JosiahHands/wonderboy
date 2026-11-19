@@ -1,5 +1,4 @@
-# WonderBoy installer. Run this one line in PowerShell:
-#   irm https://raw.githubusercontent.com/JosiahHands/wonderboy/master/app/install.ps1 | iex
+# WonderBoy installer. Started by install.cmd (see the install command in README.md).
 #
 # 1. Installs the latest WonderBoy release from GitHub (by running update.ps1).
 # 2. Offers to copy the Program.cmd launcher into your master templates folder.

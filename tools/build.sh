@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Builds the WonderBoy installer: app/release/WonderBoy-Setup.exe
-# Works from any folder. See README.md for the command to run it from bash or PowerShell.
+# Builds the WonderBoy installer locally: app/release/WonderBoy-Setup.exe
+# Only needed for testing. Releases are built by GitHub (.github/workflows/release.yml).
+# Git Bash:   ./tools/build.sh
+# PowerShell: & "$env:ProgramFiles\Git\bin\bash.exe" tools/build.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/../app"

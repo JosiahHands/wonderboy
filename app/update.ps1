@@ -1,5 +1,4 @@
-# WonderBoy updater. Run this one line in PowerShell:
-#   irm https://raw.githubusercontent.com/JosiahHands/wonderboy/master/app/update.ps1 | iex
+# WonderBoy updater. Started by update.cmd (see the update command in README.md).
 #
 # Installs the latest WonderBoy release from GitHub, unless it is already installed.
 # Installs for this user, with no admin rights needed: %LOCALAPPDATA%\Programs\wonderboy
