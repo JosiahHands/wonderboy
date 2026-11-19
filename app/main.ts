@@ -25,9 +25,36 @@ async function pickFolder(): Promise<string | null> {
   return result.canceled ? null : result.filePaths[0];
 }
 
+// ---------------------------------------------------------------- Launcher setup (WonderBoy.exe --setup)
+// Run by install.cmd: copies Program.cmd into the master templates folder,
+// so it gets copied into every case folder along with the templates.
+
+async function setupLauncher(): Promise<void> {
+  const result = await dialog.showOpenDialog({
+    title: "Choose your master templates folder (the one with 00 WonderBoy.xlsx)",
+    buttonLabel: "Put Program.cmd here",
+    properties: ["openDirectory"],
+  });
+  if (result.canceled) return;
+
+  // Installed: Program.cmd sits next to WonderBoy.exe. Development: it is in app/.
+  const source = app.isPackaged
+    ? path.join(path.dirname(process.execPath), "Program.cmd")
+    : path.join(__dirname, "..", "Program.cmd");
+  const target = path.join(result.filePaths[0], "Program.cmd");
+  fs.copyFileSync(source, target);
+  await dialog.showMessageBox({ title: "WonderBoy", message: `Program.cmd was put in:\n${result.filePaths[0]}` });
+}
+
 // ---------------------------------------------------------------- App
 
 app.whenReady().then(async () => {
+  if (process.argv.includes("--setup")) {
+    await setupLauncher();
+    app.quit();
+    return;
+  }
+
   const folder = folderFromCommandLine() ?? (await pickFolder());
   if (!folder) {
     app.quit();

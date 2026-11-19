@@ -4,6 +4,8 @@ rem Keep this file in the master folder with the Word templates, so it is copied
 rem Double-click it to open WonderBoy for the folder this file is in.
 
 set "WONDERBOY=%LOCALAPPDATA%\Programs\wonderboy\WonderBoy.exe"
+rem VS Code terminals set this, and it stops WonderBoy from opening windows.
+set ELECTRON_RUN_AS_NODE=
 
 if not exist "%WONDERBOY%" (
   echo WonderBoy is not installed on this computer.
