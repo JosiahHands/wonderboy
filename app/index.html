@@ -6,61 +6,102 @@
   <title>WonderBoy</title>
   <style>
     :root {
-      --bg: #f5f5f4;
+      --bg: #f4f5f7;
       --panel: #ffffff;
-      --text: #1c1917;
-      --muted: #6b6560;
-      --border: #d6d3d1;
+      --text: #1f2328;
+      --muted: #656d76;
+      --border: #d8dee4;
       --accent: #1d4ed8;
+      --accent-hover: #1e40af;
       --accent-text: #ffffff;
-      --note-bg: #fef9c3;
-      --note-border: #eab308;
-      --error: #b91c1c;
+      --good: #1a7f37;
+      --good-bg: #dafbe1;
+      --warn: #9a6700;
+      --warn-bg: #fff8c5;
+      --bad: #cf222e;
+      --bad-bg: #ffebe9;
+      --xlsx: #1a7f37;
+      --docx: #1d4ed8;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1c1917;
-        --panel: #292524;
-        --text: #f5f5f4;
-        --muted: #a8a29e;
-        --border: #44403c;
+        --bg: #16181d;
+        --panel: #1f232a;
+        --text: #e6edf3;
+        --muted: #8d96a0;
+        --border: #30363d;
         --accent: #3b82f6;
-        --note-bg: #3f3a1e;
-        --note-border: #a16207;
-        --error: #f87171;
+        --accent-hover: #2563eb;
+        --good: #3fb950;
+        --good-bg: #12261a;
+        --warn: #d29922;
+        --warn-bg: #2b2412;
+        --bad: #f85149;
+        --bad-bg: #2d1416;
+        --xlsx: #3fb950;
+        --docx: #60a5fa;
       }
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; } /* beats display: flex on cards and sections */
     html, body { height: 100%; margin: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+      font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
       user-select: none;
     }
-    section { display: flex; flex-direction: column; height: 100%; padding: 20px 24px; gap: 14px; }
-    section[hidden] { display: none; }
-    h1 { font-size: 22px; margin: 0; }
-    h2 { font-size: 18px; margin: 0; }
+    section { display: flex; flex-direction: column; height: 100%; padding: 20px 24px; gap: 16px; }
+    h1, h2, p { margin: 0; }
 
-    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 2px; }
-    .folder { font-size: 17px; font-weight: 600; margin: 0; word-break: break-word; }
-    .path { color: var(--muted); font-size: 12px; margin: 2px 0 0; word-break: break-all; }
+    /* header */
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 44px; height: 44px; }
+    .brand h1 { font-size: 20px; line-height: 1.2; }
+    .brand p { color: var(--muted); font-size: 13px; }
+    .version { color: var(--muted); font-size: 13px; font-weight: 400; }
 
-    .note {
-      background: var(--note-bg);
-      border-left: 4px solid var(--note-border);
-      padding: 8px 12px;
-      border-radius: 4px;
-      margin: 0;
+    .label { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .folder-name { font-size: 17px; font-weight: 600; word-break: break-word; }
+    .folder-path { color: var(--muted); font-size: 12px; word-break: break-all; margin-top: 2px; }
+
+    /* cards */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
     }
+    .grow { flex: 1; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .badge {
+      font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      padding: 2px 6px; border-radius: 4px; color: #fff; flex: none;
+    }
+    .badge.xlsx { background: var(--xlsx); }
+    .badge.docx { background: var(--docx); }
+    .row .name { font-weight: 600; word-break: break-word; }
+    .row .detail { color: var(--muted); font-size: 12px; }
+    .files { list-style: none; margin: 0; padding: 0 0 0 4px; overflow: auto; min-height: 0; flex: 1; }
+    .files li { padding: 2px 0; font-size: 13px; }
 
+    .error { background: var(--bad-bg); border-color: var(--bad); }
+    .error .title { color: var(--bad); font-weight: 600; }
+    .error p { word-break: break-word; }
 
-    .footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .hint { color: var(--muted); font-size: 12px; }
+
+    /* footer + buttons */
+    .footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+    .footer h2 { font-size: 17px; }
     .buttons { display: flex; gap: 10px; margin-left: auto; }
     button {
       font: inherit;
-      min-width: 88px;
+      min-width: 92px;
       padding: 7px 16px;
       border-radius: 6px;
       border: 1px solid var(--border);
@@ -68,45 +109,89 @@
       color: var(--text);
       cursor: pointer;
     }
+    button:hover { border-color: var(--muted); }
     button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    button.primary:hover { background: var(--accent-hover); }
+    button:disabled { opacity: .45; cursor: default; }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .error button { align-self: flex-start; min-width: 0; padding: 4px 12px; }
 
-    #working { align-items: center; justify-content: center; }
+    /* working */
+    #working { align-items: center; justify-content: center; gap: 14px; }
     .spinner {
       width: 36px; height: 36px;
       border: 4px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.9s linear infinite;
+      animation: spin .9s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    pre {
-      flex: 1;
-      overflow: auto;
-      margin: 0;
-      padding: 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font: 13px/1.5 Consolas, monospace;
-      white-space: pre-wrap;
-      user-select: text;
+    /* report */
+    .status { display: flex; align-items: center; gap: 12px; }
+    .status-icon {
+      width: 36px; height: 36px; border-radius: 50%; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #fff;
     }
-    .failed h2 { color: var(--error); }
+    .status-icon.good { background: var(--good); }
+    .status-icon.warn { background: var(--warn); }
+    .status-icon.bad { background: var(--bad); }
+    .status h2 { font-size: 19px; }
+    .status p { color: var(--muted); font-size: 13px; }
+
+    #report { overflow: auto; gap: 14px; user-select: text; }
+    .group h3 { font-size: 13px; margin: 0 0 4px; display: flex; align-items: center; gap: 6px; }
+    .group h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .group.good h3::before { background: var(--good); }
+    .group.warn h3::before { background: var(--warn); }
+    .group.bad h3::before { background: var(--bad); }
+    .group ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+    .group li { font-size: 13px; padding: 1px 0; word-break: break-word; }
+    .group li .count { color: var(--muted); }
   </style>
 </head>
 <body>
   <!-- Are you sure? -->
   <section id="ready" hidden>
-    <h1>WonderBoy</h1>
-    <div>
-      <p class="label">Folder</p>
-      <p class="folder" id="folder-name"></p>
-      <p class="path" id="folder-path"></p>
+    <div class="brand">
+      <img src="icon.svg" alt="">
+      <div>
+        <h1>WonderBoy <span class="version" id="version"></span></h1>
+        <p>Fill in Word files from an Excel list</p>
+      </div>
     </div>
 
-    <p class="note">Every Word file in this folder will have its column A text replaced with column B from the Excel file. Save the Excel file before you start.</p>
+    <div>
+      <p class="label">Folder</p>
+      <p class="folder-name" id="folder-name"></p>
+      <p class="folder-path" id="folder-path"></p>
+    </div>
+
+    <!-- What will happen (filled in by renderer.ts) -->
+    <div class="card grow" id="preview" hidden>
+      <div class="row">
+        <span class="badge xlsx">XLSX</span>
+        <div>
+          <p class="name" id="excel-name"></p>
+          <p class="detail" id="pair-count"></p>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge docx">DOCX</span>
+        <p class="name" id="word-count"></p>
+      </div>
+      <ul class="files" id="word-files"></ul>
+    </div>
+
+    <!-- Why it can't run (filled in by renderer.ts) -->
+    <div class="card error" id="problem" hidden>
+      <p class="title">WonderBoy can't run in this folder</p>
+      <p id="problem-message"></p>
+      <button id="check-again">Check again</button>
+    </div>
+
+    <p class="hint" id="hint">Save the Excel file and close the Word files first. The Word files are changed in place.</p>
 
     <div class="footer">
       <h2>Are you sure?</h2>
@@ -125,10 +210,17 @@
 
   <!-- Report or error -->
   <section id="done" hidden>
-    <h2 id="done-title">Done</h2>
-    <pre id="report"></pre>
+    <div class="status">
+      <div class="status-icon" id="status-icon"></div>
+      <div>
+        <h2 id="status-title"></h2>
+        <p id="status-detail"></p>
+      </div>
+    </div>
+    <div class="card grow" id="report"></div>
     <div class="footer">
       <div class="buttons">
+        <button id="open-folder">Open folder</button>
         <button id="close" class="primary">Close</button>
       </div>
     </div>

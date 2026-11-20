@@ -1,3 +1,5 @@
+<img src="app/icon.png" width="96" alt="WonderBoy logo">
+
 # WonderBoy
 
 WonderBoy fills in Word files from an Excel list. Put one `.xlsx` file and your `.docx` files in a folder:

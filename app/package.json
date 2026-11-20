@@ -1,6 +1,6 @@
 {
   "name": "wonderboy",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Fills in Word files with find/replace pairs from an Excel file",
   "author": "JosiahHands",
@@ -32,16 +32,21 @@
     "files": [
       "dist/**/*.js",
       "index.html",
+      "icon.svg",
+      "icon.ico",
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icon.ico"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
       "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
       "include": "installer.nsh",
       "artifactName": "WonderBoy-Setup.${ext}"
     }

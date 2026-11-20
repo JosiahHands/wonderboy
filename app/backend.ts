@@ -30,16 +30,28 @@ export interface Report {
   errors: { file: string; reason: string }[];
 }
 
-// ---------------------------------------------------------------- Main entry point
+export interface FolderCheck {
+  excelFile: string;
+  pairs: Pair[];
+  wordFiles: string[];
+}
 
-// Fills in every .docx in `folder`. Throws an Error with a plain message if it can't start at all
-// (no .xlsx, more than one .xlsx, no Word files). Problems with single files go in the report.
-export async function runWonderBoy(folder: string): Promise<Report> {
+// ---------------------------------------------------------------- Main entry points
+
+// Looks at the folder without changing anything. Throws an Error with a plain message if
+// WonderBoy can't run there (no .xlsx, more than one .xlsx, no Word files).
+export function checkFolder(folder: string): FolderCheck {
   const excelFile = findExcelFile(folder);
   const pairs = readPairs(path.join(folder, excelFile));
-
   const wordFiles = topLevelFiles(folder, ".docx");
   if (wordFiles.length === 0) throw new Error("There are no Word (.docx) files in this folder.");
+  return { excelFile, pairs, wordFiles };
+}
+
+// Fills in every .docx in `folder`. Throws like checkFolder if it can't start at all.
+// Problems with single files go in the report.
+export async function runWonderBoy(folder: string): Promise<Report> {
+  const { excelFile, pairs, wordFiles } = checkFolder(folder);
 
   const toReplace = pairs.filter((p) => p.replace !== "");
   const report: Report = {

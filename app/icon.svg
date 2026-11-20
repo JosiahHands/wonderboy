@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- WonderBoy logo: a document being filled in, with a sparkle. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#bg)"/>
+
+  <!-- page with folded corner -->
+  <path d="M72 40 H148 L188 80 V200 a10 10 0 0 1 -10 10 H72 a10 10 0 0 1 -10 -10 V50 a10 10 0 0 1 10 -10 Z" fill="#ffffff"/>
+  <path d="M148 40 V70 a10 10 0 0 0 10 10 H188 Z" fill="#bfdbfe"/>
+
+  <!-- lines of text: the first one filled in -->
+  <rect x="84" y="102" width="80" height="14" rx="7" fill="#1d4ed8"/>
+  <rect x="84" y="132" width="58" height="14" rx="7" fill="#93c5fd"/>
+  <rect x="84" y="162" width="44" height="14" rx="7" fill="#93c5fd"/>
+
+  <!-- sparkle -->
+  <path d="M190 128 C195 160 204 169 236 174 C204 179 195 188 190 220 C185 188 176 179 144 174 C176 169 185 160 190 128 Z"
+        fill="#fbbf24" stroke="#1e3a8a" stroke-width="7" stroke-linejoin="round"/>
+</svg>

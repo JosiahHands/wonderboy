@@ -8,6 +8,7 @@
     "test": "tsx tools/testBackend.ts"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.9.0",
     "jszip": "^3.10.1",
     "tsx": "^4.23.15",
