@@ -1,15 +1,13 @@
 // WonderBoy backend.
-// Reads the OBJECTS / INFO list from "00 WonderBoy.xlsx" and replaces every Object
-// with its Info in every .docx file in the same folder.
+// Reads find/replace pairs from the folder's one .xlsx (column A = find, column B = replace)
+// and replaces them in every .docx file in the same folder (top level only).
 
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 import { DOMParser, XMLSerializer, Document, Element, Node } from "@xmldom/xmldom";
 
-export const EXCEL_FILE_NAME = "00 WonderBoy.xlsx";
 const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const XML_NS = "http://www.w3.org/XML/1998/namespace";
 
@@ -18,82 +16,49 @@ const WORD_PARTS = /^word\/(document|header\d*|footer\d*|footnotes|endnotes)\.xm
 
 // ---------------------------------------------------------------- Types
 
-export interface Settings {
-  matchCase: boolean; // true: "(APPLICANT)" does not match "(Applicant)"
-  includeParentheses: boolean; // false: match "APPLICANT" instead of "(APPLICANT)"
-}
-
-export interface Entry {
-  object: string; // e.g. "(APPLICANT)"
-  info: string; // e.g. "John Smith, Jr."
+export interface Pair {
+  find: string; // column A, e.g. "(APPLICANT)"
+  replace: string; // column B, e.g. "John Smith, Jr."
 }
 
 export interface Report {
+  excelFile: string;
   changedFiles: { file: string; replacements: number }[];
   unchangedFiles: string[];
-  notFound: string[]; // Objects not found in any document
-  emptyInfo: string[]; // Objects skipped because their Info is empty
+  notFound: string[]; // column A texts not found in any document
+  emptyReplace: string[]; // column A texts skipped because column B is empty
   errors: { file: string; reason: string }[];
-}
-
-// ---------------------------------------------------------------- Settings
-
-const DEFAULT_SETTINGS: Settings = { matchCase: false, includeParentheses: true };
-
-function settingsPath(): string {
-  const appData = process.env.APPDATA ?? path.join(os.homedir(), "AppData", "Roaming");
-  return path.join(appData, "WonderBoy", "settings.json");
-}
-
-// Returns the settings used last time, or the defaults on first run.
-export function loadSettings(): Settings {
-  try {
-    const saved = JSON.parse(fs.readFileSync(settingsPath(), "utf8"));
-    return {
-      matchCase: typeof saved.matchCase === "boolean" ? saved.matchCase : DEFAULT_SETTINGS.matchCase,
-      includeParentheses:
-        typeof saved.includeParentheses === "boolean" ? saved.includeParentheses : DEFAULT_SETTINGS.includeParentheses,
-    };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
-}
-
-export function saveSettings(settings: Settings): void {
-  fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
-  fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2));
 }
 
 // ---------------------------------------------------------------- Main entry point
 
 // Fills in every .docx in `folder`. Throws an Error with a plain message if it can't start at all
-// (missing Excel file, missing header, no Word files). Problems with single files go in the report.
-export async function runWonderBoy(folder: string, settings: Settings): Promise<Report> {
-  const entries = readWonderBoy(folder);
+// (no .xlsx, more than one .xlsx, no Word files). Problems with single files go in the report.
+export async function runWonderBoy(folder: string): Promise<Report> {
+  const excelFile = findExcelFile(folder);
+  const pairs = readPairs(path.join(folder, excelFile));
 
-  const wordFiles = fs
-    .readdirSync(folder)
-    .filter((name) => name.toLowerCase().endsWith(".docx") && !name.startsWith("~$"))
-    .sort();
+  const wordFiles = topLevelFiles(folder, ".docx");
   if (wordFiles.length === 0) throw new Error("There are no Word (.docx) files in this folder.");
 
-  const toReplace = entries.filter((e) => e.info !== "");
+  const toReplace = pairs.filter((p) => p.replace !== "");
   const report: Report = {
+    excelFile,
     changedFiles: [],
     unchangedFiles: [],
     notFound: [],
-    emptyInfo: unique(entries.filter((e) => e.info === "").map((e) => e.object)),
+    emptyReplace: unique(pairs.filter((p) => p.replace === "").map((p) => p.find)),
     errors: [],
   };
 
-  const matcher = makeMatcher(toReplace, settings);
-  const foundObjects = new Set<string>();
+  const matcher = makeMatcher(toReplace);
+  const found = new Set<string>();
 
   for (const file of wordFiles) {
     try {
       const counts = await fillDocument(path.join(folder, file), matcher);
       const total = countTotal(counts);
-      counts.forEach((_, object) => foundObjects.add(object));
+      counts.forEach((_, find) => found.add(find));
       if (total > 0) report.changedFiles.push({ file, replacements: total });
       else report.unchangedFiles.push(file);
     } catch (error) {
@@ -101,13 +66,13 @@ export async function runWonderBoy(folder: string, settings: Settings): Promise<
     }
   }
 
-  report.notFound = unique(toReplace.map((e) => e.object).filter((object) => !foundObjects.has(object)));
+  report.notFound = unique(toReplace.map((p) => p.find).filter((find) => !found.has(find)));
   return report;
 }
 
-// Plain-text version of the report, for showing in a message box.
+// Plain-text version of the report, for showing in the window.
 export function formatReport(report: Report): string {
-  const lines: string[] = [];
+  const lines: string[] = [`Values from: ${report.excelFile}`, ""];
 
   if (report.changedFiles.length > 0) {
     lines.push("Documents filled in:");
@@ -121,10 +86,10 @@ export function formatReport(report: Report): string {
     lines.push("", "Documents with nothing to replace:", ...report.unchangedFiles.map((f) => `  ${f}`));
   }
   if (report.notFound.length > 0) {
-    lines.push("", "Objects not found in any document:", ...report.notFound.map((o) => `  ${o}`));
+    lines.push("", "Not found in any document:", ...report.notFound.map((t) => `  ${t}`));
   }
-  if (report.emptyInfo.length > 0) {
-    lines.push("", "Skipped because INFO is empty:", ...report.emptyInfo.map((o) => `  ${o}`));
+  if (report.emptyReplace.length > 0) {
+    lines.push("", "Skipped because column B is empty:", ...report.emptyReplace.map((t) => `  ${t}`));
   }
   if (report.errors.length > 0) {
     lines.push("", "Problems:", ...report.errors.map((e) => `  ${e.file}: ${e.reason}`));
@@ -134,39 +99,34 @@ export function formatReport(report: Report): string {
 
 // ---------------------------------------------------------------- Excel
 
-// Reads the OBJECTS / INFO rows from the first sheet of "00 WonderBoy.xlsx".
-export function readWonderBoy(folder: string): Entry[] {
-  const file = path.join(folder, EXCEL_FILE_NAME);
-  if (!fs.existsSync(file)) throw new Error(`Could not find "${EXCEL_FILE_NAME}" in this folder.`);
+// The folder's one .xlsx file (Excel's "~$" lock files don't count).
+export function findExcelFile(folder: string): string {
+  const files = topLevelFiles(folder, ".xlsx");
+  if (files.length === 0) throw new Error("There is no Excel (.xlsx) file in this folder.");
+  if (files.length > 1) {
+    throw new Error(`There is more than one Excel file in this folder: ${files.join(", ")}. Leave only one.`);
+  }
+  return files[0];
+}
 
+// Reads the pairs from the first sheet, starting at row 1: column A = find, column B = replace.
+export function readPairs(file: string): Pair[] {
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(fs.readFileSync(file), { type: "buffer" });
   } catch {
-    throw new Error(`Could not open "${EXCEL_FILE_NAME}". Close it in Excel and run again.`);
+    throw new Error(`Could not open "${path.basename(file)}". Close it in Excel and run again.`);
   }
 
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1:A1");
 
-  // Find the header row: OBJECTS in column A, INFO in column B.
-  let headerRow = -1;
+  const pairs: Pair[] = [];
   for (let row = range.s.r; row <= range.e.r; row++) {
-    if (cellText(sheet, row, 0).toUpperCase() === "OBJECTS" && cellText(sheet, row, 1).toUpperCase() === "INFO") {
-      headerRow = row;
-      break;
-    }
+    const find = cellText(sheet, row, 0);
+    if (find !== "") pairs.push({ find, replace: cellText(sheet, row, 1) });
   }
-  if (headerRow === -1) {
-    throw new Error(`Could not find the OBJECTS / INFO header in "${EXCEL_FILE_NAME}" (column A and B).`);
-  }
-
-  const entries: Entry[] = [];
-  for (let row = headerRow + 1; row <= range.e.r; row++) {
-    const object = cellText(sheet, row, 0);
-    if (object !== "") entries.push({ object, info: cellText(sheet, row, 1) });
-  }
-  return entries;
+  return pairs;
 }
 
 // The cell's text as Excel displays it (so dates and money keep their formatting).
@@ -179,28 +139,19 @@ function cellText(sheet: XLSX.WorkSheet, row: number, col: number): string {
 // ---------------------------------------------------------------- Matching
 
 interface Matcher {
-  regex: RegExp; // finds any Object
-  find: (matchedText: string) => Entry & { search: string };
+  regex: RegExp; // finds any column A text
+  find: (matchedText: string) => Pair;
 }
 
-// Builds one regex that finds every Object, longest first, so "(Ap address)" wins over "(Ap)".
-function makeMatcher(entries: Entry[], settings: Settings): Matcher {
-  const list = entries
-    .map((e) => ({ ...e, search: settings.includeParentheses ? e.object : stripParentheses(e.object) }))
-    .filter((e) => e.search !== "")
-    .sort((a, b) => b.search.length - a.search.length);
-
-  const same = (a: string, b: string) => (settings.matchCase ? a === b : a.toLowerCase() === b.toLowerCase());
-  const pattern = list.length > 0 ? list.map((e) => escapeRegex(e.search)).join("|") : "(?!)"; // (?!) never matches
-
+// One regex that finds every column A text exactly (case-sensitive), longest first,
+// so "(Ap address)" wins over "(Ap)".
+function makeMatcher(pairs: Pair[]): Matcher {
+  const list = [...pairs].sort((a, b) => b.find.length - a.find.length);
+  const pattern = list.length > 0 ? list.map((p) => escapeRegex(p.find)).join("|") : "(?!)"; // (?!) never matches
   return {
-    regex: new RegExp(pattern, settings.matchCase ? "g" : "gi"),
-    find: (matchedText) => list.find((e) => same(e.search, matchedText))!,
+    regex: new RegExp(pattern, "g"),
+    find: (matchedText) => list.find((p) => p.find === matchedText)!,
   };
-}
-
-function stripParentheses(text: string): string {
-  return text.replace(/^\((.*)\)$/s, "$1").trim();
 }
 
 function escapeRegex(text: string): string {
@@ -209,8 +160,8 @@ function escapeRegex(text: string): string {
 
 // ---------------------------------------------------------------- Word
 
-// Replaces Objects in one .docx file and saves it if anything changed.
-// Returns how many times each Object was replaced.
+// Replaces the pairs in one .docx file and saves it if anything changed.
+// Returns how many times each column A text was replaced.
 async function fillDocument(filePath: string, matcher: Matcher): Promise<Map<string, number>> {
   const zip = await JSZip.loadAsync(fs.readFileSync(filePath));
   const counts = new Map<string, number>();
@@ -239,11 +190,11 @@ async function fillDocument(filePath: string, matcher: Matcher): Promise<Map<str
   return counts;
 }
 
-// Replaces Objects in one paragraph.
+// Replaces the pairs in one paragraph.
 // Word often splits text into several pieces (<w:t> elements), e.g. "(APPLI" + "CANT)".
-// So we join the pieces, find the Objects in the joined text, then edit the pieces:
-// the Info goes into the piece where the Object starts (keeping that piece's formatting),
-// and the rest of the Object is removed from the following pieces.
+// So we join the pieces, find the matches in the joined text, then edit the pieces:
+// the replacement goes into the piece where the match starts (keeping that piece's formatting),
+// and the rest of the match is removed from the following pieces.
 function fillParagraph(paragraph: Element, matcher: Matcher, counts: Map<string, number>): void {
   // This paragraph's own text pieces (not ones inside a nested paragraph, like a text box).
   const pieces: Element[] = [];
@@ -268,8 +219,8 @@ function fillParagraph(paragraph: Element, matcher: Matcher, counts: Map<string,
   for (const match of matches.reverse()) {
     const start = match.index!;
     const end = start + match[0].length;
-    const entry = matcher.find(match[0]);
-    counts.set(entry.object, (counts.get(entry.object) ?? 0) + 1);
+    const pair = matcher.find(match[0]);
+    counts.set(pair.find, (counts.get(pair.find) ?? 0) + 1);
 
     for (let k = 0; k < pieces.length; k++) {
       const pieceStart = starts[k];
@@ -278,7 +229,7 @@ function fillParagraph(paragraph: Element, matcher: Matcher, counts: Map<string,
 
       const from = Math.max(start, pieceStart) - pieceStart;
       const to = Math.min(end, pieceEnd) - pieceStart;
-      const insert = start >= pieceStart ? entry.info : ""; // Info goes where the Object starts
+      const insert = start >= pieceStart ? pair.replace : ""; // replacement goes where the match starts
       texts[k] = texts[k].slice(0, from) + insert + texts[k].slice(to);
     }
   }
@@ -323,6 +274,15 @@ function closestParagraph(node: Node): Node | null {
 }
 
 // ---------------------------------------------------------------- Helpers
+
+// Files directly in `folder` (no subfolders) with this extension, skipping Office "~$" lock files.
+function topLevelFiles(folder: string, extension: string): string[] {
+  return fs
+    .readdirSync(folder, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(extension) && !e.name.startsWith("~$"))
+    .map((e) => e.name)
+    .sort();
+}
 
 function countTotal(counts: Map<string, number>): number {
   let total = 0;

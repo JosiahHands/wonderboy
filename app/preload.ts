@@ -5,6 +5,6 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("wonderboy", {
   startInfo: () => ipcRenderer.invoke("start-info"),
-  run: (settings: unknown) => ipcRenderer.invoke("run", settings),
+  run: () => ipcRenderer.invoke("run"),
   quit: () => ipcRenderer.send("quit"),
 });

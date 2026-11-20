@@ -1,6 +1,9 @@
 # WonderBoy
 
-Fills in a folder of Word templates with the values typed into `00 WonderBoy.xlsx`.
+WonderBoy fills in Word files from an Excel list. Put one `.xlsx` file and your `.docx` files in a folder:
+- In the `.xlsx`, column A is the text to find (for example `(APPLICANT)`) and column B is what replaces it (for example `John Smith, Jr.`). Start at row 1, one pair per row.
+- Right-click the folder and choose **Fill in with WonderBoy**. On Windows 11 it's under **Show more options**.
+- Click **Yes**. Every `.docx` directly in that folder is filled in. Subfolders are not touched.
 
 These commands work in both Git Bash and PowerShell.
 
@@ -9,8 +12,6 @@ These commands work in both Git Bash and PowerShell.
 ```bash
 curl.exe -fsSL https://raw.githubusercontent.com/JosiahHands/wonderboy/master/app/install.cmd -o wonderboy-install.cmd; ./wonderboy-install.cmd
 ```
-
-This installs WonderBoy and asks for your master templates folder, the one with `00 WonderBoy.xlsx`. It puts `Program.cmd` there. To fill in a case folder, double-click `Program.cmd` inside it.
 
 ## Update
 

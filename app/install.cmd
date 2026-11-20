@@ -1,12 +1,10 @@
 @echo off
 rem WonderBoy install. Downloaded and run by the install command in README.md.
-rem Installs the latest WonderBoy release, then asks where to put the Program.cmd launcher.
-rem Deletes itself when done.
+rem Installs the latest WonderBoy release, which adds "Fill in with WonderBoy" to the
+rem right-click menu of every folder. Deletes itself when done.
 setlocal
 set "SETUP=%TEMP%\WonderBoy-Setup.exe"
 set "WONDERBOY=%LOCALAPPDATA%\Programs\wonderboy\WonderBoy.exe"
-rem VS Code terminals set this, and it stops WonderBoy from opening windows.
-set ELECTRON_RUN_AS_NODE=
 
 echo Downloading WonderBoy...
 curl.exe -fsSL -o "%SETUP%" https://github.com/JosiahHands/wonderboy/releases/latest/download/WonderBoy-Setup.exe
@@ -24,10 +22,7 @@ if not exist "%WONDERBOY%" (
   goto end
 )
 echo WonderBoy is installed.
-
-echo Choose your master templates folder in the window that opens.
-start "" /wait "%WONDERBOY%" --setup
-echo Done.
+echo To use it: right-click a folder (Windows 11: Show more options) and choose "Fill in with WonderBoy".
 
 :end
 endlocal

@@ -1,4 +1,4 @@
-// Builds a fake case folder: "00 WonderBoy.xlsx" plus a few Word files with Objects in them.
+// Builds a fake case folder: one .xlsx with find/replace pairs plus a few Word files.
 // Used by testBackend.ts, and on its own for trying the app by hand:
 //   npx tsx tools/sampleCase.ts "C:\some\folder\Smith, John (Estate)"
 
@@ -7,29 +7,26 @@ import * as path from "path";
 import * as XLSX from "xlsx";
 import JSZip from "jszip";
 
-const EXCEL_FILE_NAME = "00 WonderBoy.xlsx";
 const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
 const R = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
 const V = 'xmlns:v="urn:schemas-microsoft-com:vml"';
 
-export function makeExcel(folder: string): void {
+// Find/replace pairs from row 1: column A = find, column B = replace.
+export function makeExcel(folder: string, fileName = "values.xlsx"): void {
   const sheet = XLSX.utils.aoa_to_sheet([
-    ["Program.exe"],
-    [],
-    ["OBJECTS", "INFO"],
-    [],
     ["(APPLICANT)", "John Smith, Jr."],
     ["(Ap address)", "123 N Avondale\nAmarillo, TX 79106"],
     ["(DECEDENT)", "John Smith"],
     ["(EMPTY)", ""],
+    [],
     ["(MISSING)", "not in any document"],
     ["(FEE)", 1500],
   ]);
-  sheet["B10"].z = '"$"#,##0.00'; // money format, should come through as "$1,500.00"
+  sheet["B7"].z = '"$"#,##0.00'; // money format, should come through as "$1,500.00"
   sheet["!cols"] = [{ wch: 16 }, { wch: 40 }];
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Sheet1");
-  XLSX.writeFile(book, path.join(folder, EXCEL_FILE_NAME));
+  XLSX.writeFile(book, path.join(folder, fileName));
 }
 
 async function makeDocx(filePath: string, body: string, header: string): Promise<void> {
@@ -90,6 +87,9 @@ export async function makeCase(folder: string): Promise<void> {
   await makeDocx(path.join(folder, "02 nothing.docx"), p("No objects here."), "Plain header");
   fs.writeFileSync(path.join(folder, "99 broken.docx"), "this is not a zip file");
   fs.writeFileSync(path.join(folder, "~$01 ap.docx"), "Word lock file, must be skipped");
+  fs.writeFileSync(path.join(folder, "~$values.xlsx"), "Excel lock file, must be skipped");
+  fs.mkdirSync(path.join(folder, "subfolder"), { recursive: true });
+  await makeDocx(path.join(folder, "subfolder", "nested.docx"), p("(APPLICANT) must stay"), "Plain header");
 }
 
 // Run on its own: build a case folder at the given path.

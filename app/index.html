@@ -55,11 +55,6 @@
       margin: 0;
     }
 
-    fieldset { border: 1px solid var(--border); border-radius: 6px; background: var(--panel); padding: 8px 14px 12px; margin: 0; }
-    legend { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 0 4px; }
-    label { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; margin-top: 6px; cursor: pointer; }
-    label input { margin: 3px 0 0; width: 16px; height: 16px; }
-    label small { grid-column: 2; color: var(--muted); font-size: 12px; }
 
     .footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .buttons { display: flex; gap: 10px; margin-left: auto; }
@@ -102,33 +97,19 @@
   </style>
 </head>
 <body>
-  <!-- Are you ready? -->
+  <!-- Are you sure? -->
   <section id="ready" hidden>
     <h1>WonderBoy</h1>
     <div>
-      <p class="label">Case folder</p>
+      <p class="label">Folder</p>
       <p class="folder" id="folder-name"></p>
       <p class="path" id="folder-path"></p>
     </div>
 
-    <p class="note">Save <b>00 WonderBoy.xlsx</b> in Excel before you start.</p>
-
-    <fieldset>
-      <legend>Settings</legend>
-      <label>
-        <input type="checkbox" id="match-case">
-        <span>Match case</span>
-        <small>On: (APPLICANT) does not match (Applicant).</small>
-      </label>
-      <label>
-        <input type="checkbox" id="include-parentheses">
-        <span>Include parentheses</span>
-        <small>On: match (APPLICANT). Off: match APPLICANT.</small>
-      </label>
-    </fieldset>
+    <p class="note">Every Word file in this folder will have its column A text replaced with column B from the Excel file. Save the Excel file before you start.</p>
 
     <div class="footer">
-      <h2>Are you ready?</h2>
+      <h2>Are you sure?</h2>
       <div class="buttons">
         <button id="no">No</button>
         <button id="yes" class="primary">Yes</button>

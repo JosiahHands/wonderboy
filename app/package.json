@@ -1,8 +1,8 @@
 {
   "name": "wonderboy",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
-  "description": "Fills in Word templates with values from 00 WonderBoy.xlsx",
+  "description": "Fills in Word files with find/replace pairs from an Excel file",
   "author": "JosiahHands",
   "repository": "github:JosiahHands/wonderboy",
   "main": "dist/main.js",
@@ -34,9 +34,6 @@
       "index.html",
       "package.json"
     ],
-    "extraFiles": [
-      "Program.cmd"
-    ],
     "win": {
       "target": "nsis"
     },
@@ -45,6 +42,7 @@
       "perMachine": false,
       "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
+      "include": "installer.nsh",
       "artifactName": "WonderBoy-Setup.${ext}"
     }
   }
